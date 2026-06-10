@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playbook CS — Porto Cidadania Portuguesa</title>
+<style>
+  /* ===================== TOKENS ===================== */
+  :root {
+    --porto-blue: #003087;
+    --porto-gold: #C8962B;
+    --porto-red: #C8102E;
+    --porto-light-blue: #0057B7;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface2: #F0F2F7;
+    --border: #DDE3EE;
+    --text: #1A1F36;
+    --text-secondary: #5A6480;
+    --sidebar-bg: #001E5C;
+    --sidebar-text: #C8D8FF;
+    --sidebar-active: #FFFFFF;
+    --sidebar-active-bg: rgba(200,150,43,0.18);
+    --sidebar-hover: rgba(255,255,255,0.08);
+    --sidebar-section: #6A8BC4;
+    --tag-blue: #EAF0FF;
+    --tag-blue-text: #003087;
+    --green: #16A34A;
+    --yellow: #CA8A04;
+    --red-alert: #DC2626;
+    --shadow: 0 2px 12px rgba(0,48,135,0.08);
+    --radius: 10px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+    --topbar-h: 56px;
+    --sidebar-w: 268px;
+  }
+  [data-theme="dark"] {
+    --bg: #10142A;
+    --surface: #181D3A;
+    --surface2: #1E2440;
+    --border: #2A3054;
+    --text: #E8EDFF;
+    --text-secondary: #8898CC;
+    --sidebar-bg: #080D22;
+    --sidebar-text: #8898CC;
+    --sidebar-active: #FFFFFF;
+    --sidebar-active-bg: rgba(200,150,43,0.22);
+    --sidebar-hover: rgba(255,255,255,0.06);
+    --tag-blue: #1A2448;
+    --tag-blue-text: #88AAFF;
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+  }
+
+  /* ===================== RESET ===================== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; transition: background .2s, color .2s; }
+  a { color: var(--porto-light-blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { cursor: pointer; font-family: var(--font); }
+  ul, ol { padding-left: 1.4em; }
+  li { margin-bottom: .35em; line-height: 1.65; }
+
+  /* ===================== TOPBAR ===================== */
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+    background: var(--porto-blue); color: #fff; display: flex; align-items: center;
+    padding: 0 20px; gap: 16px; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  #topbar .logo { font-weight: 800; font-size: 1rem; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  #topbar .logo .badge { background: var(--porto-gold); color: #fff; font-size: .6rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: .05em; }
+  #search-wrap { flex: 1; max-width: 480px; position: relative; }
+  #search-input {
+    width: 100%; padding: 8px 16px 8px 38px; border-radius: 22px; border: none;
+    background: rgba(255,255,255,0.13); color: #fff; font-size: .88rem; outline: none;
+    transition: background .2s;
+  }
+  #search-input::placeholder { color: rgba(255,255,255,.55); }
+  #search-input:focus { background: rgba(255,255,255,.22); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); opacity: .7; pointer-events: none; }
+  #search-results {
+    display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+    background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+    border: 1px solid var(--border); max-height: 360px; overflow-y: auto; z-index: 2000;
+  }
+  .sr-item { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .sr-item:last-child { border-bottom: none; }
+  .sr-item:hover { background: var(--surface2); }
+  .sr-title { font-weight: 600; font-size: .88rem; color: var(--text); }
+  .sr-section { font-size: .75rem; color: var(--text-secondary); margin-top: 2px; }
+  .sr-match { background: rgba(200,150,43,.25); border-radius: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .icon-btn { background: none; border: none; color: rgba(255,255,255,.75); padding: 6px; border-radius: 6px; display: flex; align-items: center; transition: background .15s; }
+  .icon-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+  #hamburger { display: none; }
+
+  /* ===================== LAYOUT ===================== */
+  #layout { display: flex; padding-top: var(--topbar-h); min-height: 100vh; }
+
+  /* ===================== SIDEBAR ===================== */
+  #sidebar {
+    position: fixed; top: var(--topbar-h); left: 0; bottom: 0; width: var(--sidebar-w);
+    background: var(--sidebar-bg); overflow-y: auto; z-index: 900;
+    border-right: 1px solid rgba(255,255,255,.06); transition: transform .25s ease;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.1) transparent;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
+  .sidebar-section-label {
+    font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--sidebar-section); padding: 18px 18px 6px; display: block;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 18px;
+    color: var(--sidebar-text); font-size: .85rem; cursor: pointer;
+    border-radius: 0; transition: background .15s, color .15s;
+    border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+  .nav-item.active { background: var(--sidebar-active-bg); color: var(--sidebar-active); font-weight: 600; border-left: 3px solid var(--porto-gold); }
+  .nav-item .icon { width: 18px; text-align: center; flex-shrink: 0; font-size: .95rem; }
+  .nav-item .chevron { margin-left: auto; font-size: .7rem; transition: transform .2s; opacity: .5; }
+  .nav-item.open .chevron { transform: rotate(90deg); }
+  .subnav { overflow: hidden; max-height: 0; transition: max-height .3s ease; }
+  .subnav.open { max-height: 800px; }
+  .subnav-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 18px 7px 44px;
+    color: var(--sidebar-section); font-size: .82rem; cursor: pointer;
+    transition: background .15s, color .15s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .subnav-item:hover { background: var(--sidebar-hover); color: #fff; }
+  .subnav-item.active { color: var(--porto-gold); font-weight: 600; }
+  .sidebar-divider { height: 1px; background: rgba(255,255,255,.06); margin: 8px 18px; }
+
+  /* ===================== MAIN ===================== */
+  #main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 40px 60px; min-width: 0; }
+
+  /* ===================== PAGES ===================== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===================== BREADCRUMB ===================== */
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text-secondary); margin-bottom: 20px; flex-wrap: wrap; }
+  .breadcrumb span { cursor: pointer; }
+  .breadcrumb span:hover { color: var(--porto-light-blue); }
+  .breadcrumb .sep { opacity: .4; }
+
+  /* ===================== PAGE HEADER ===================== */
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 1.75rem; font-weight: 800; color: var(--text); letter-spacing: -.02em; }
+  .page-header p { color: var(--text-secondary); margin-top: 6px; font-size: .95rem; }
+  .page-title-row { display: flex; align-items: flex-start; gap: 16px; }
+  .page-title-icon { font-size: 2.5rem; flex-shrink: 0; }
+
+  /* ===================== CARDS ===================== */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; cursor: pointer; transition: box-shadow .2s, border-color .2s, transform .15s;
+    box-shadow: var(--shadow);
+  }
+  .card:hover { box-shadow: 0 6px 24px rgba(0,48,135,.13); border-color: var(--porto-light-blue); transform: translateY(-2px); }
+  .card-icon { font-size: 1.8rem; margin-bottom: 10px; }
+  .card-title { font-weight: 700; font-size: .95rem; color: var(--text); margin-bottom: 4px; }
+  .card-desc { font-size: .82rem; color: var(--text-secondary); line-height: 1.5; }
+  .card-badge { display: inline-block; margin-top: 10px; font-size: .7rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .badge-blue { background: var(--tag-blue); color: var(--tag-blue-text); }
+  .badge-gold { background: rgba(200,150,43,.15); color: var(--porto-gold); }
+  .badge-green { background: rgba(22,163,74,.12); color: var(--green); }
+
+  /* ===================== SECTION BLOCK ===================== */
+  .section-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; }
+  .section-block-header {
+    display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer;
+    transition: background .15s; user-select: none;
+  }
+  .section-block-header:hover { background: var(--surface2); }
+  .section-block-header h2 { font-size: 1rem; font-weight: 700; flex: 1; }
+  .section-block-header .toggle-icon { font-size: .8rem; color: var(--text-secondary); transition: transform .2s; }
+  .section-block-header.open .toggle-icon { transform: rotate(180deg); }
+  .section-block-body { padding: 0 20px 20px; border-top: 1px solid var(--border); }
+  .section-block-body p, .section-block-body li { font-size: .9rem; line-height: 1.7; color: var(--text); }
+
+  /* ===================== STEPS ===================== */
+  .steps { list-style: none; padding: 0; margin: 16px 0; }
+  .steps li { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .steps li:last-child { border-bottom: none; }
+  .step-num { width: 28px; height: 28px; background: var(--porto-blue); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; }
+  .step-body strong { color: var(--porto-blue); }
+  [data-theme="dark"] .step-body strong { color: #88AAFF; }
+
+  /* ===================== CHECKLIST ===================== */
+  .checklist { list-style: none; padding: 0; margin: 12px 0; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li input[type=checkbox] { margin-top: 3px; accent-color: var(--porto-blue); width: 16px; height: 16px; flex-shrink: 0; }
+  .checklist li label { line-height: 1.55; cursor: pointer; }
+
+  /* ===================== TABLE ===================== */
+  .data-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: .87rem; }
+  .data-table th { background: var(--porto-blue); color: #fff; padding: 10px 14px; text-align: left; font-weight: 600; }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  .data-table tr:hover td { background: var(--surface2); }
+  .data-table td ul { margin: 0; padding-left: 1.2em; }
+
+  /* ===================== ALERT BOX ===================== */
+  .alert { display: flex; gap: 12px; padding: 14px 16px; border-radius: 8px; margin: 14px 0; font-size: .88rem; line-height: 1.6; }
+  .alert-info { background: var(--tag-blue); border-left: 4px solid var(--porto-blue); }
+  .alert-warning { background: rgba(202,138,4,.1); border-left: 4px solid var(--yellow); }
+  .alert-danger { background: rgba(220,38,38,.1); border-left: 4px solid var(--red-alert); }
+  .alert-success { background: rgba(22,163,74,.1); border-left: 4px solid var(--green); }
+  .alert-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  /* ===================== TAG ROW ===================== */
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+  .tag { font-size: .72rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; background: var(--tag-blue); color: var(--tag-blue-text); }
+
+  /* ===================== TEMPLATE BOX ===================== */
+  .template-box {
+    background: var(--surface2); border: 1px dashed var(--border); border-radius: 8px;
+    padding: 14px 16px; margin: 12px 0; font-size: .85rem; line-height: 1.7;
+    font-family: 'Segoe UI', sans-serif; position: relative;
+  }
+  .template-box .copy-btn {
+    position: absolute; top: 8px; right: 8px; background: var(--porto-blue); color: #fff;
+    border: none; border-radius: 6px; padding: 4px 10px; font-size: .72rem; cursor: pointer; transition: opacity .15s;
+  }
+  .template-box .copy-btn:hover { opacity: .8; }
+
+  /* ===================== CODE BADGE ===================== */
+  .code-tag { display: inline-block; background: rgba(0,48,135,.12); color: var(--porto-blue); padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: .82rem; font-weight: 600; }
+  [data-theme="dark"] .code-tag { background: rgba(136,170,255,.15); color: #88AAFF; }
+
+  /* ===================== STATUS BADGES ===================== */
+  .status-green { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-weight: 600; font-size: .82rem; }
+  .status-yellow { display: inline-flex; align-items: center; gap: 5px; color: var(--yellow); font-weight: 600; font-size: .82rem; }
+  .status-red { display: inline-flex; align-items: center; gap: 5px; color: var(--red-alert); font-weight: 600; font-size: .82rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red-alert); }
+
+  /* ===================== FAQ ===================== */
+  .faq-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .faq-q { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; cursor: pointer; font-weight: 600; font-size: .9rem; background: var(--surface); transition: background .15s; }
+  .faq-q:hover { background: var(--surface2); }
+  .faq-q .faq-icon { font-size: .8rem; transition: transform .2s; color: var(--text-secondary); }
+  .faq-q.open .faq-icon { transform: rotate(180deg); }
+  .faq-a { display: none; padding: 0 18px 16px; font-size: .88rem; line-height: 1.75; border-top: 1px solid var(--border); padding-top: 14px; color: var(--text); }
+  .faq-a.open { display: block; }
+
+  /* ===================== EDIT MODE ===================== */
+  .edit-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(200,150,43,.15); color: var(--porto-gold); border: 1px solid rgba(200,150,43,.3); padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; margin-bottom: 16px; }
+  [contenteditable="true"] { outline: 2px dashed var(--porto-gold) !important; border-radius: 4px; padding: 2px 4px; }
+  .edit-toolbar { display: none; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(200,150,43,.08); border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(200,150,43,.2); flex-wrap: wrap; }
+  .edit-toolbar.visible { display: flex; }
+  .toolbar-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: .78rem; font-weight: 600; transition: background .15s; }
+  .toolbar-btn:hover { background: var(--surface2); }
+  .toolbar-btn.danger { border-color: var(--red-alert); color: var(--red-alert); }
+  .toolbar-btn.primary { background: var(--porto-blue); color: #fff; border-color: var(--porto-blue); }
+
+  /* ===================== TIMELINE ===================== */
+  .timeline { position: relative; padding-left: 30px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .tl-item { position: relative; padding-bottom: 20px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot { position: absolute; left: -24px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--porto-blue); border: 2px solid var(--bg); }
+  .tl-content h4 { font-size: .88rem; font-weight: 700; margin-bottom: 4px; }
+  .tl-content p { font-size: .82rem; color: var(--text-secondary); }
+
+  /* ===================== IDEA / SUGGESTION FORM ===================== */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 5px; color: var(--text-secondary); }
+  .form-control {
+    width: 100%; padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 8px;
+    background: var(--surface); color: var(--text); font-family: var(--font); font-size: .88rem;
+    transition: border .15s; outline: none;
+  }
+  .form-control:focus { border-color: var(--porto-blue); }
+  textarea.form-control { resize: vertical; min-height: 90px; }
+  .btn-primary { background: var(--porto-blue); color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-size: .88rem; font-weight: 700; transition: opacity .15s; }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1.5px solid var(--border); padding: 10px 22px; border-radius: 8px; font-size: .88rem; font-weight: 700; transition: background .15s; }
+  .btn-secondary:hover { background: var(--surface2); }
+
+  /* ===================== DASHBOARD ===================== */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .metric-val { font-size: 1.7rem; font-weight: 800; color: var(--porto-blue); }
+  [data-theme="dark"] .metric-val { color: #88AAFF; }
+  .metric-label { font-size: .75rem; color: var(--text-secondary); margin-top: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .metric-delta { font-size: .75rem; font-weight: 600; margin-top: 6px; }
+  .delta-up { color: var(--green); }
+  .delta-down { color: var(--red-alert); }
+  .bar-chart { margin: 12px 0; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: .8rem; }
+  .bar-label { width: 120px; color: var(--text-secondary); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 10px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--porto-blue); border-radius: 4px; transition: width .6s ease; }
+  .bar-count { width: 30px; text-align: right; font-weight: 600; color: var(--text); flex-shrink: 0; }
+
+  /* ===================== TOOLS GRID ===================== */
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow .2s, transform .15s; box-shadow: var(--shadow); }
+  .tool-card:hover { box-shadow: 0 4px 20px rgba(0,48,135,.12); transform: translateY(-2px); }
+  .tool-card .tool-icon { font-size: 1.6rem; }
+  .tool-card .tool-name { font-weight: 700; font-size: .9rem; }
+  .tool-card .tool-desc { font-size: .78rem; color: var(--text-secondary); }
+  .tool-card a { font-size: .8rem; font-weight: 600; margin-top: 4px; }
+
+  /* ===================== NOTIFICATION ===================== */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; background: var(--porto-blue); color: #fff;
+    padding: 12px 20px; border-radius: 10px; font-size: .85rem; font-weight: 600;
+    box-shadow: 0 6px 24px rgba(0,0,0,.2); z-index: 9999; opacity: 0; pointer-events: none;
+    transition: opacity .3s, transform .3s; transform: translateY(8px);
+  }
+  #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+  /* ===================== OVERLAY ===================== */
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 850; }
+  #overlay.visible { display: block; }
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 260px; }
+    #main { padding: 24px 20px 50px; }
+    #hamburger { display: flex; }
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; }
+  }
+  @media (max-width: 600px) {
+    #main { padding: 16px 14px 48px; }
+    .page-header h1 { font-size: 1.35rem; }
+    .card-grid { grid-template-columns: 1fr; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .tools-grid { grid-template-columns: 1fr 1fr; }
+    #search-wrap { max-width: 180px; }
+  }
+
+  /* ===================== MISC ===================== */
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .text-muted { color: var(--text-secondary); font-size: .85rem; }
+  .mt-2 { margin-top: 8px; }
+  .mt-4 { margin-top: 16px; }
+  .mb-2 { margin-bottom: 8px; }
+  h3 { font-size: 1rem; font-weight: 700; margin: 18px 0 10px; color: var(--text); }
+  h4 { font-size: .9rem; font-weight: 700; margin: 14px 0 8px; color: var(--text); }
+  p { margin-bottom: 10px; line-height: 1.7; font-size: .9rem; }
+  .highlight { background: rgba(200,150,43,.18); padding: 1px 4px; border-radius: 3px; font-weight: 600; }
+  .emoji-big { font-size: 1.6rem; }
+  .flex-gap { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+  .pill-blue { background: var(--tag-blue); color: var(--tag-blue-text); }
+  .pill-gold { background: rgba(200,150,43,.15); color: var(--porto-gold); }
+  .pill-red { background: rgba(220,38,38,.1); color: var(--red-alert); }
+
+  /* PRINT */
+  @media print {
+    #topbar, #sidebar, #overlay { display: none !important; }
+    #main { margin-left: 0; padding: 0; }
+    .section-block-body { display: block !important; max-height: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <button class="icon-btn" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="logo">
+    🌍 <span>Porto CS <span class="badge">PLAYBOOK</span></span>
+  </div>
+  <div id="search-wrap">
+    <svg class="search-icon" width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search-input" placeholder="Buscar processos, tarefas, dúvidas..." oninput="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('search-results').style.display='none',200)" onfocus="if(this.value)doSearch(this.value)">
+    <div id="search-results"></div>
+  </div>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="toggleEdit()" title="Modo edição" id="edit-btn">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+    <button class="icon-btn" onclick="toggleTheme()" title="Alternar tema" id="theme-btn">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <button class="icon-btn" title="Favoritos" onclick="showToast('⭐ Favoritos em breve!')">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- OVERLAY (mobile) -->
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- LAYOUT -->
+<div id="layout">
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <span class="sidebar-section-label">Início</span>
+  <button class="nav-item active" onclick="navigate('home')" data-page="home">
+    <span class="icon">🏠</span> Dashboard
+  </button>
+
+  <span class="sidebar-section-label">Processos e Procedimentos</span>
+  <button class="nav-item" onclick="toggleSubnav(this,'sub-processos')" data-group="processos">
+    <span class="icon">📋</span> Processos CS
+    <span class="chevron">▶</span>
+  </button>
+  <div class="subnav" id="sub-processos">
+    <button class="subnav-item" onclick="navigate('apresentacao')">📬 Contato de Apresentação</button>
+    <button class="subnav-item" onclick="navigate('procuracoes')">📝 Procurações no Apollo</button>
+    <button class="subnav-item" onclick="navigate('assinatura')">✍️ Assinatura e Validação</button>
+    <button class="subnav-item" onclick="navigate('docs-por-plano')">📁 Docs por Plano</button>
+    <button class="subnav-item" onclick="navigate('whatsapp')">💬 Atendimento WhatsApp</button>
+    <button class="subnav-item" onclick="navigate('acompanhamento')">🔄 Acompanhamento Proativo</button>
+    <button class="subnav-item" onclick="navigate('protocolo')">📮 Envio para Protocolo</button>
+    <button class="subnav-item" onclick="navigate('chave-acesso')">🔑 Chave de Acesso</button>
+    <button class="subnav-item" onclick="navigate('status-processo')">📊 Status do Processo</button>
+    <button class="subnav-item" onclick="navigate('distratos')">🤝 Distratos e Cancelamentos</button>
+    <button class="subnav-item" onclick="navigate('checklist-final')">✅ Checklist Final de Qualidade</button>
+  </div>
+
+  <button class="nav-item" onclick="navigate('regra-mae')" data-page="regra-mae">
+    <span class="icon">⚖️</span> Regra-Mãe (Planos)
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <span class="sidebar-section-label">Base de Conhecimento</span>
+  <button class="nav-item" onclick="navigate('faq')" data-page="faq">
+    <span class="icon">❓</span> FAQ — Dúvidas Frequentes
+  </button>
+  <button class="nav-item" onclick="navigate('templates')" data-page="templates">
+    <span class="icon">💌</span> Templates de Mensagem
+  </button>
+  <button class="nav-item" onclick="navigate('codigos-cliente')" data-page="codigos-cliente">
+    <span class="icon">🎨</span> Códigos de Cliente
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <span class="sidebar-section-label">Ferramentas e Recursos</span>
+  <button class="nav-item" onclick="navigate('ferramentas')" data-page="ferramentas">
+    <span class="icon">🛠️</span> Ferramentas e Links
+  </button>
+
+  <div class="sidebar-divider"></div>
+  <span class="sidebar-section-label">Melhoria Contínua</span>
+  <button class="nav-item" onclick="navigate('melhoria')" data-page="melhoria">
+    <span class="icon">💡</span> Sugestões e Ideias
+  </button>
+  <button class="nav-item" onclick="navigate('licoes')" data-page="licoes">
+    <span class="icon">📚</span> Lições Aprendidas
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- ====== HOME / DASHBOARD ====== -->
+  <div class="page active" id="page-home">
+    <div class="page-header">
+      <div class="page-title-row">
+        <div class="page-title-icon">🌍</div>
+        <div>
+          <h1>Playbook CS — Porto Cidadania Portuguesa</h1>
+          <p>Central de processos, procedimentos e boas práticas do time de Sucesso do Cliente.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="edit-toolbar-home" class="edit-toolbar">
+      <span style="font-size:.8rem;font-weight:700;color:var(--porto-gold)">✏️ Modo Edição Ativo</span>
+      <button class="toolbar-btn primary" onclick="saveEdits()">💾 Salvar</button>
+      <button class="toolbar-btn" onclick="toggleEdit()">✕ Fechar</button>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-val">11</div>
+        <div class="metric-label">Processos documentados</div>
+        <div class="metric-delta delta-up">↑ Atualizado</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">12</div>
+        <div class="metric-label">Casos FAQ</div>
+        <div class="metric-delta delta-up">↑ Novo</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">3</div>
+        <div class="metric-label">Planos ativos</div>
+        <div class="metric-delta">Diamante · Prata · Bronze</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">7</div>
+        <div class="metric-label">Templates de msg</div>
+        <div class="metric-delta delta-up">↑ Disponíveis</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3>📍 Acesso Rápido</h3>
+    <div class="card-grid">
+      <div class="card" onclick="navigate('apresentacao')">
+        <div class="card-icon">📬</div>
+        <div class="card-title">Contato de Apresentação</div>
+        <div class="card-desc">Primeiro contato com o cliente, alinhamento de expectativas e solicitação inicial de documentos.</div>
+        <span class="card-badge badge-blue">Tarefa #1</span>
+      </div>
+      <div class="card" onclick="navigate('docs-por-plano')">
+        <div class="card-icon">📁</div>
+        <div class="card-title">Solicitação de Documentos</div>
+        <div class="card-desc">Fluxo completo de solicitação, conferência e acompanhamento dos documentos por plano.</div>
+        <span class="card-badge badge-gold">Diamante / Prata / Bronze</span>
+      </div>
+      <div class="card" onclick="navigate('faq')">
+        <div class="card-icon">❓</div>
+        <div class="card-title">Dúvidas Frequentes</div>
+        <div class="card-desc">Respostas padronizadas para os casos mais comuns: prazo, status, advogado, inadimplência…</div>
+        <span class="card-badge badge-blue">12 casos</span>
+      </div>
+      <div class="card" onclick="navigate('regra-mae')">
+        <div class="card-icon">⚖️</div>
+        <div class="card-title">Regra-Mãe dos Planos</div>
+        <div class="card-desc">Identificar o plano do cliente no FlowUp antes de qualquer orientação documental.</div>
+        <span class="card-badge badge-blue">Regra #1</span>
+      </div>
+      <div class="card" onclick="navigate('templates')">
+        <div class="card-icon">💌</div>
+        <div class="card-title">Templates de Mensagem</div>
+        <div class="card-desc">Modelos prontos para WhatsApp: /apresentação, /procuração, /chaveacesso e mais.</div>
+        <span class="card-badge badge-green">7 templates</span>
+      </div>
+      <div class="card" onclick="navigate('checklist-final')">
+        <div class="card-icon">✅</div>
+        <div class="card-title">Checklist de Qualidade</div>
+        <div class="card-desc">Verificações obrigatórias antes de finalizar qualquer tarefa do CS.</div>
+        <span class="card-badge badge-blue">7 pontos</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3>📈 Processos mais consultados</h3>
+    <div class="section-block" style="padding:16px 20px">
+      <div class="bar-chart">
+        <div class="bar-row"><span class="bar-label">Apresentação</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="bar-count">90</span></div>
+        <div class="bar-row"><span class="bar-label">Docs por Plano</span><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><span class="bar-count">80</span></div>
+        <div class="bar-row"><span class="bar-label">FAQ</span><div class="bar-track"><div class="bar-fill" style="width:72%"></div></div><span class="bar-count">72</span></div>
+        <div class="bar-row"><span class="bar-label">Status Processo</span><div class="bar-track"><div class="bar-fill" style="width:65%"></div></div><span class="bar-count">65</span></div>
+        <div class="bar-row"><span class="bar-label">Distratos</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-count">40</span></div>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Lembre-se:</strong> Em caso de divergência entre materiais antigos e o Playbook, <strong>sempre siga o Playbook</strong>.</div>
+    </div>
+  </div>
+
+  <!-- ====== REGRA-MÃE ====== -->
+  <div class="page" id="page-regra-mae">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Regra-Mãe dos Planos</span></div>
+    <div class="page-header">
+      <h1>⚖️ Regra-Mãe: Plano Contratado Define a Solicitação</h1>
+      <p>Antes de qualquer orientação documental, o CS deve identificar o plano do cliente no <strong>FlowUp</strong>.</p>
+    </div>
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div>Isso evita cobranças indevidas, lacunas de documentos e desalinhamento de expectativas.</div>
+    </div>
+    <div class="section-block" id="sb-planos">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📊</span><h2>Responsabilidades por Plano</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <table class="data-table">
+          <thead><tr><th>Plano</th><th>Responsabilidade da Porto</th><th>Responsabilidade do Cliente</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong class="pill pill-blue">💎 Diamante</strong></td>
+              <td>Emite todos os documentos e certidões necessários (brasileiros e portugueses) e realiza o apostilamento.</td>
+              <td>Envia procuração assinada e cópia autenticada do RG ou Passaporte.</td>
+            </tr>
+            <tr>
+              <td><strong class="pill pill-gold">🥈 Prata</strong></td>
+              <td>Realiza o apostilamento dos documentos já emitidos pelo cliente.</td>
+              <td>Emite certidões brasileiras, envia procuração e cópia do documento de identificação.</td>
+            </tr>
+            <tr>
+              <td><strong class="pill" style="background:rgba(120,120,120,.15);color:var(--text-secondary)">🥉 Bronze</strong></td>
+              <td>Recebe e faz análise técnica dos documentos.</td>
+              <td>Emite todos os documentos brasileiros/portugueses e realiza apostilamento de todos eles.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>Aplicar regras por plano no momento do envio da preparação documental: <br>
+      <strong>Diamante:</strong> procurações + cópia autenticada de RG/Passaporte<br>
+      <strong>Prata:</strong> procurações + cópia do documento + certidões brasileiras<br>
+      <strong>Bronze:</strong> procurações + cópia do documento + lista completa de certidões e orientação de apostilamento</div>
+    </div>
+  </div>
+
+  <!-- ====== APRESENTAÇÃO ====== -->
+  <div class="page" id="page-apresentacao">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Contato de Apresentação</span></div>
+    <div class="page-header">
+      <h1>📬 Tarefa: Contato de Apresentação</h1>
+      <p>Primeira tarefa do CS — iniciamos oficialmente o relacionamento, alinhamos expectativas e realizamos a primeira solicitação de documentos.</p>
+    </div>
+    <div class="tag-row"><span class="tag">Tarefa #1</span><span class="tag">FlowUp</span><span class="tag">SharePoint</span><span class="tag">WhatsApp</span></div>
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div>Esta etapa define o tom da comunicação, constrói conexão e revela o perfil do cliente (nível de atenção, comportamento, forma de interação).</div>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo Detalhado</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir o <strong>quadro do cliente no FlowUp</strong> e conferir se há mais de um processo para mais pessoas na família.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Abrir a <strong>pasta do cliente no SharePoint</strong> (pesquisar pelo nome do cliente).</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Voltar ao FlowUp e abrir a <strong>tarefa de apresentação</strong>. Conferir: com quem o CS se comunica; se há grupo; documentos nas pastas; documentos extras além de RG/Passaporte; familiar fazendo o processo; e <strong>Código Cliente</strong>.</div></li>
+          <li><div class="step-num">4</div><div class="step-body"><strong>Interpretar o Código Cliente:</strong> 🟢 Verde = tranquilo | 🟡 Amarelo = atenção, pode se estressar | 🔴 Vermelho = alerta máximo, atenção dobrada.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Abrir <strong>"Documentos do cliente"</strong> no SharePoint, abrir a ficha da pessoa com quem devemos nos comunicar e <strong>copiar o número de WhatsApp</strong>.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Antes de escrever: verificar documentos iniciais — RG ou Passaporte válido. Se RG tiver mais de 10 anos, orientar nova emissão. Para processos de Netos e Cônjuges: perguntar se já residiu fora do Brasil e registrar a resposta.</div></li>
+          <li><div class="step-num">7</div><div class="step-body">No WhatsApp, digitar <span class="code-tag">/apresentação</span> e escolher a opção com o nome do CS responsável.</div></li>
+          <li><div class="step-num">8</div><div class="step-body">Editar a mensagem com: bom dia/boa tarde, nome da pessoa que fará o processo, nome da pessoa com quem se fala e documentos necessários. <strong>Negritar</strong> as partes que exigem ação do cliente.</div></li>
+          <li><div class="step-num">9</div><div class="step-body"><strong>Enviar em blocos separados</strong> — evitar bloco único para não parecer mensagem automática.</div></li>
+          <li><div class="step-num">10</div><div class="step-body">Voltar ao FlowUp: registrar que o contato foi realizado, inserir o número, salvar e <strong>finalizar a tarefa</strong>.</div></li>
+        </ol>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header" onclick="toggleBlock(this)">
+        <span>⚠️</span><h2>Atenção: Processos de Netos e Cônjuges</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body">
+        <p>Para processos de <strong>Netos</strong> e <strong>Cônjuges</strong>, é obrigatório perguntar se o cliente já residiu fora do Brasil e registrar a resposta no FlowUp. Essa informação impacta a documentação necessária.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PROCURAÇÕES ====== -->
+  <div class="page" id="page-procuracoes">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Procurações no Apollo</span></div>
+    <div class="page-header">
+      <h1>📝 Emissão Técnica de Procurações no Apollo</h1>
+      <p>Emitir procurações corretamente no sistema Apollo e conferir os dados antes do envio ao cliente.</p>
+    </div>
+    <div class="tag-row"><span class="tag">Apollo</span><span class="tag">ATHENA</span><span class="tag">Procuração</span></div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Acessar <a href="https://apollo.portocidadaniaportuguesa.com.br/pt/Auth/Login" target="_blank">apollo.portocidadaniaportuguesa.com.br</a> com e-mail e senha corporativos.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">No painel, entrar em <strong>Cadastro &gt; Parceiro de Negócios</strong>.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Clicar em <strong>ATHENA</strong> e depois em <strong>IMPORTAR CLIENTE</strong>.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Inserir o e-mail do cliente e confirmar a importação.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Localizar o cliente na lista ou pelos filtros.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Clicar com o <strong>botão direito</strong> no cliente e escolher o tipo de procuração necessário.</div></li>
+          <li><div class="step-num">7</div><div class="step-body">Abrir o Word baixado e conferir: <strong>nome completo, CPF, endereço</strong> e demais dados.</div></li>
+          <li><div class="step-num">8</div><div class="step-body">Corrigir qualquer divergência ou complementar informações <strong>antes</strong> de enviar ao cliente.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== ASSINATURA ====== -->
+  <div class="page" id="page-assinatura">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Assinatura e Validação</span></div>
+    <div class="page-header">
+      <h1>✍️ Assinatura e Validação das Procurações</h1>
+      <p>Orientar o cliente sobre a assinatura correta conforme a finalidade da procuração.</p>
+    </div>
+    <div class="tag-row"><span class="tag">Procuração Cartórios</span><span class="tag">Procuração Forense</span><span class="tag">GOV.BR</span></div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Identificar o <strong>tipo de procuração</strong>: Cartórios ou Forense.</div></li>
+          <li><div class="step-num">2</div><div class="step-body"><strong>Procuração de Cartórios:</strong> orientar assinatura digital via GOV.BR quando aplicável. Usada para atos em território brasileiro.</div></li>
+          <li><div class="step-num">3</div><div class="step-body"><strong>Procuração Forense:</strong> orientar assinatura em cartório com reconhecimento de firma <em>por autenticidade</em>.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Explicar ao cliente a diferença entre as assinaturas para evitar envio inválido.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Registrar a orientação no FlowUp e acompanhar o retorno.</div></li>
+        </ol>
+        <div class="alert alert-warning mt-2">
+          <span class="alert-icon">⚠️</span>
+          <div>Nunca deixar o cliente assinar sem orientação prévia — um erro de assinatura atrasa todo o processo.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== DOCS POR PLANO ====== -->
+  <div class="page" id="page-docs-por-plano">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Solicitação de Documentos</span></div>
+    <div class="page-header">
+      <h1>📁 Solicitação e Recebimento de Documentos por Plano</h1>
+      <p>Garantir que documentos estejam completos, corretos e alinhados ao plano contratado.</p>
+    </div>
+    <div class="tag-row"><span class="tag">Diamante</span><span class="tag">Prata</span><span class="tag">Bronze</span><span class="tag">FlowUp</span><span class="tag">SharePoint</span><span class="tag">WhatsApp</span></div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo Detalhado (Diamante / Prata)</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir FlowUp, SharePoint e histórico completo do WhatsApp (preferencialmente no celular).</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Conferir se o cliente enviou fotos/documentos solicitados. <br><strong>Se não enviou:</strong> cobrar retorno, justificar no FlowUp e colocar a tarefa para 2 dias à frente.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Abrir procurações emitidas, ficha do cliente e fotos/documentos enviados.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Conferir as informações das procurações com a ficha e documentos. Corrigir divergências antes do envio.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Digitar <span class="code-tag">/procuração</span> no WhatsApp. Personalizar e enviar em blocos separados.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Aplicar regras por plano:<br>
+            <span class="pill pill-blue">Diamante</span> procurações + cópia autenticada de RG/Passaporte<br>
+            <span class="pill pill-gold">Prata</span> procurações + cópia do doc + certidões brasileiras<br>
+            <span class="pill" style="background:rgba(120,120,120,.1);color:var(--text-secondary)">Bronze</span> procurações + cópia + lista completa de certidões + orientação apostilamento
+          </div></li>
+          <li><div class="step-num">7</div><div class="step-body">Comunicar prazo padrão de <strong>7 dias</strong> para o cliente providenciar os documentos.</div></li>
+          <li><div class="step-num">8</div><div class="step-body">Atualizar o FlowUp com data de envio e número de contato. Ajustar prazo para <strong>3 dias úteis</strong>.</div></li>
+          <li><div class="step-num">9</div><div class="step-body">Retornando em 3 dias: lembrar o cliente. Ajustar para 3 dias úteis, depois 5 dias úteis conforme necessidade.</div></li>
+          <li><div class="step-num">10</div><div class="step-body">Quando o cliente providenciar: registrar no FlowUp e incluir código de rastreio, se houver.</div></li>
+          <li><div class="step-num">11</div><div class="step-body">Quando o <strong>time processual</strong> confirmar recebimento: avisar o cliente, atualizar FlowUp, salvar e finalizar.</div></li>
+          <li><div class="step-num">12</div><div class="step-body">Conferir se existe outra tarefa em andamento para não deixar o campo <strong>"Em andamento"</strong> vazio.</div></li>
+        </ol>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header" onclick="toggleBlock(this)">
+        <span>✅</span><h2>Validação antes de orientar envio</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body">
+        <p>Antes de fornecer endereço ou orientar envio:</p>
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Conferir a lista de documentos no FlowUp.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Se houver dúvida sobre conformidade, salvar fotos/documentos na pasta correta do SharePoint.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Enviar Hangout ao <strong>Processual</strong> solicitando conferência dos documentos.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Somente após validação, seguir com a orientação ao cliente.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== WHATSAPP ====== -->
+  <div class="page" id="page-whatsapp">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Atendimento WhatsApp</span></div>
+    <div class="page-header">
+      <h1>💬 Atendimento WhatsApp: Investigação Obrigatória</h1>
+      <p>Responder com precisão, empatia e contexto — jamais prometendo o que não pode ser garantido.</p>
+    </div>
+    <div class="tag-row"><span class="tag">WhatsApp</span><span class="tag">FlowUp</span><span class="tag">SharePoint</span></div>
+    <div class="alert alert-danger">
+      <span class="alert-icon">🚫</span>
+      <div><strong>Regra absoluta:</strong> Nunca responder sem investigar o contexto completo primeiro.</div>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body"><strong>Conferir o histórico profundo no celular</strong> — o computador pode não mostrar toda a conversa.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Identificar o <strong>perfil comportamental</strong>: impaciente, tranquilo, detalhista, ansioso ou objetivo.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Cruzar informações entre <strong>WhatsApp, FlowUp e SharePoint</strong> antes de informar status ou prometer prazo.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Responder por <strong>ordem de chegada</strong> (mais antigas → mais recentes).</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Personalizar a resposta e registrar no FlowUp quando houver informação relevante.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== ACOMPANHAMENTO ====== -->
+  <div class="page" id="page-acompanhamento">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Acompanhamento Proativo</span></div>
+    <div class="page-header">
+      <h1>🔄 Tarefa: Acompanhamento Proativo</h1>
+      <p>Reduzir ansiedade e manter o cliente informado quando há ação interna pendente.</p>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir FlowUp e conferir processos relacionados.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Abrir SharePoint e verificar documentos/status relevantes.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Procurar contato no FlowUp e investigar histórico do WhatsApp.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Avaliar o estado do cliente e a necessidade de atualização proativa.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Se necessário, enviar atualização por WhatsApp explicando o andamento interno — <strong>mesmo sem grande novidade</strong>.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Atualizar a tarefa no FlowUp com o andamento e definir prazo para <strong>7 dias</strong>.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PROTOCOLO ====== -->
+  <div class="page" id="page-protocolo">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Envio para Protocolo</span></div>
+    <div class="page-header">
+      <h1>📮 Comunicação de Envio para Protocolo</h1>
+      <p>Informar o cliente quando o processo for enviado para protocolo.</p>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir FlowUp e verificar se há processos relacionados.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Abrir SharePoint e conferir informações/documentos do processo.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Abrir WhatsApp e verificar histórico, inclusive promessas de data ou comunicações anteriores.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Se ainda não informado, digitar <span class="code-tag">/envioprotocolo</span>.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Editar com nome correto do processo, data de envio e informações relevantes. Enviar em blocos separados.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Atualizar FlowUp: <em>"cliente informado sobre envio para protocolo"</em>.</div></li>
+          <li><div class="step-num">7</div><div class="step-body">Alterar prazo para o <strong>próximo mês</strong> — quando será conferida a chave de acesso.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CHAVE ACESSO ====== -->
+  <div class="page" id="page-chave-acesso">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Chave de Acesso</span></div>
+    <div class="page-header">
+      <h1>🔑 Comunicação da Chave de Acesso</h1>
+      <p>Comunicar a chave de acesso assim que disponível e preparar o acompanhamento mensal.</p>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir FlowUp e SharePoint para validar processo e dados.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Consultar a <strong>planilha de controle de processos protocolados</strong> para confirmar chave, data de protocolo e conservatória.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Abrir WhatsApp e conferir histórico.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Digitar <span class="code-tag">/chaveacesso</span> e editar com nome do processo, chave, data e informações relevantes.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Enviar em blocos separados.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Atualizar FlowUp: <em>"cliente informado sobre a chave de acesso"</em>.</div></li>
+          <li><div class="step-num">7</div><div class="step-body">Alterar prazo para o <strong>próximo mês</strong> para acompanhamento contínuo.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== STATUS PROCESSO ====== -->
+  <div class="page" id="page-status-processo">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Status do Processo</span></div>
+    <div class="page-header">
+      <h1>📊 Acompanhamento do Status do Processo</h1>
+      <p>Manter o cliente informado sobre as fases pós-protocolo: submetido, em análise ou para decisão.</p>
+    </div>
+    <div class="tag-row">
+      <span class="tag">Submetido</span><span class="tag">Em Análise</span><span class="tag">Para Decisão</span>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Abrir FlowUp e verificar processos relacionados.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Abrir SharePoint e WhatsApp; conferir histórico antes de responder.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Consultar o status atual registrado na tarefa do FlowUp: <strong>submetido, em análise ou para decisão</strong>.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">Usar o atalho correspondente: <span class="code-tag">/submetido</span> | <span class="code-tag">/emanalise</span> | <span class="code-tag">/paradecisao</span></div></li>
+          <li><div class="step-num">5</div><div class="step-body">Editar a mensagem com nome do processo, data e informações relevantes. Enviar em blocos separados.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Atualizar FlowUp com status informado, data e número de telefone.</div></li>
+          <li><div class="step-num">7</div><div class="step-body">Alterar prazo para o <strong>próximo mês</strong> para continuidade do acompanhamento.</div></li>
+        </ol>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header" onclick="toggleBlock(this)">
+        <span>🕐</span><h2>Prazos Médios por Modalidade</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body">
+        <table class="data-table">
+          <thead><tr><th>Modalidade</th><th>Prazo Médio</th></tr></thead>
+          <tbody>
+            <tr><td>Filhos de portugueses (maiores de idade)</td><td>1 ano e meio a 2 anos e meio</td></tr>
+            <tr><td>Netos de portugueses</td><td>3 a 4 anos e meio</td></tr>
+            <tr><td>Cônjuge</td><td>3 a 4 anos e meio</td></tr>
+          </tbody>
+        </table>
+        <div class="alert alert-warning">
+          <span class="alert-icon">⚠️</span>
+          <div>Sempre esclarecer que são <strong>estimativas</strong> e podem variar conforme modalidade, Conservatória e demanda do órgão público.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== DISTRATOS ====== -->
+  <div class="page" id="page-distratos">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Distratos e Cancelamentos</span></div>
+    <div class="page-header">
+      <h1>🤝 Fluxo de Distratos e Cancelamentos</h1>
+      <p>Acolher a manifestação de cancelamento, tentar retenção de forma estruturada e formalizar o desfecho.</p>
+    </div>
+    <div class="section-block">
+      <div class="section-block-header open" onclick="toggleBlock(this)">
+        <span>📋</span><h2>Passo a Passo</h2><span class="toggle-icon">▼</span>
+      </div>
+      <div class="section-block-body" style="display:block">
+        <ol class="steps">
+          <li><div class="step-num">1</div><div class="step-body">Receber manifestação de cancelamento via Financeiro, Comercial ou CS.</div></li>
+          <li><div class="step-num">2</div><div class="step-body">Se recebido por Financeiro/Comercial: acolher o cliente e compilar a solicitação com prints/registros.</div></li>
+          <li><div class="step-num">3</div><div class="step-body">Encaminhar ao CS com assunto: <strong>"Pedido de cancelamento - [Nome do Cliente]"</strong>.</div></li>
+          <li><div class="step-num">4</div><div class="step-body">CS abre levantamento: <strong>"Levantamento de informações – [Nome do Cliente]"</strong>.</div></li>
+          <li><div class="step-num">5</div><div class="step-body">Levantar: dados financeiros, contratuais, histórico, motivo de cancelamento e status do processo.</div></li>
+          <li><div class="step-num">6</div><div class="step-body">Avaliar estratégias de retenção: suspensão de pagamentos, renegociação de termos, revisão de expectativas.</div></li>
+          <li><div class="step-num">7</div><div class="step-body"><strong>Realizar ligação direta</strong> com o cliente para negociação.</div></li>
+          <li><div class="step-num">8</div><div class="step-body"><strong>Se houver acordo/retenção:</strong> formalizar por e-mail com assunto <em>"Distrato – [Nome do Cliente]"</em> e detalhar os pontos acordados.</div></li>
+          <li><div class="step-num">9</div><div class="step-body"><strong>Se houver cancelamento efetivo:</strong> encaminhar ao Dr. Christian copiando Ana e Estela.</div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== CHECKLIST FINAL ====== -->
+  <div class="page" id="page-checklist-final">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Processos CS</span><span class="sep">/</span><span>Checklist Final</span></div>
+    <div class="page-header">
+      <h1>✅ Checklist Final de Qualidade</h1>
+      <p>Verificações obrigatórias antes de finalizar qualquer tarefa do CS.</p>
+    </div>
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div>Use este checklist como rotina — não finalize nenhuma tarefa sem passar por todos os pontos.</div>
+    </div>
+    <div class="section-block" style="padding:16px 20px">
+      <ul class="checklist" id="checklist-quality">
+        <li><input type="checkbox" id="c1"><label for="c1">Plano conferido no FlowUp antes de orientar documentos.</label></li>
+        <li><input type="checkbox" id="c2"><label for="c2">Histórico do WhatsApp verificado antes de responder.</label></li>
+        <li><input type="checkbox" id="c3"><label for="c3">SharePoint consultado para documentos, ficha e dados do cliente.</label></li>
+        <li><input type="checkbox" id="c4"><label for="c4">Mensagem personalizada com nome, processo, data e orientações corretas.</label></li>
+        <li><input type="checkbox" id="c5"><label for="c5">Mensagem enviada em blocos separados, sem aparência automática.</label></li>
+        <li><input type="checkbox" id="c6"><label for="c6">FlowUp atualizado com data, número de contato, status e próximo prazo.</label></li>
+        <li><input type="checkbox" id="c7"><label for="c7">Em caso de divergência entre materiais antigos e Playbook: seguir o Playbook.</label></li>
+      </ul>
+      <button class="btn-secondary mt-2" onclick="resetChecklist()">🔄 Reiniciar Checklist</button>
+    </div>
+    <h3>📋 Checklist Rápido para Dúvidas Sensíveis</h3>
+    <div class="section-block" style="padding:16px 20px">
+      <ul class="checklist">
+        <li><input type="checkbox" id="cs1"><label for="cs1">Investigar FlowUp, SharePoint e histórico do WhatsApp antes de responder.</label></li>
+        <li><input type="checkbox" id="cs2"><label for="cs2">Acolher a dúvida ou frustração do cliente antes da explicação técnica.</label></li>
+        <li><input type="checkbox" id="cs3"><label for="cs3">Evitar prometer prazo fechado quando depender de Conservatória, cartório, consulado ou órgão externo.</label></li>
+        <li><input type="checkbox" id="cs4"><label for="cs4">Usar templates como base, mas sempre personalizar com nome, processo, status e contexto.</label></li>
+        <li><input type="checkbox" id="cs5"><label for="cs5">Registrar no FlowUp o que foi informado, canal usado e próximo prazo.</label></li>
+        <li><input type="checkbox" id="cs6"><label for="cs6">Acionar áreas internas por Hangout quando houver dependência do Financeiro, Processual ou time de agendamento.</label></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ====== FAQ ====== -->
+  <div class="page" id="page-faq">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Base de Conhecimento</span><span class="sep">/</span><span>FAQ</span></div>
+    <div class="page-header">
+      <h1>❓ Dúvidas e Casos Recorrentes no Atendimento</h1>
+      <p>Respostas padronizadas para os casos mais frequentes dos clientes. Use como base — sempre personalize.</p>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Por que meu processo está parado? <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Explicar que, na maioria dos casos, o processo <strong>não está parado</strong>: está aguardando análise interna da Conservatória. Reforçar que há alta demanda, número limitado de conservadores e fila cronológica.</p>
+        <p>O processo passa por etapas internas: registro/classificação → verificação preliminar → distribuição → análise detalhada → despacho/decisão → registro → notificação.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"Entendemos sua ansiedade, mas o processo segue dentro do fluxo da Conservatória. Muitas vezes ele fica um longo período sem mudança visível de status porque aguarda análise interna em ordem cronológica. Seguimos acompanhando e avisaremos assim que houver qualquer atualização."</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O que significa o status "Submetido"? <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Significa que a documentação foi protocolada corretamente e o processo está inserido na fila de análise. É normal permanecer neste status por bastante tempo.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"Bom dia, [nome]! Tudo bem? Passando para informar que estamos acompanhando o seu processo. Ele segue na etapa 'submetido'. É normal que permaneça assim por um bom tempo, pois os conservadores costumam atualizar as etapas mais ao final do processo. Assim que tivermos qualquer novidade, entraremos em contato."</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">O advogado não consegue acelerar? <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Processos em Conservatórias seguem <strong>ordem cronológica rigorosa</strong>, sem atalho ou privilégio. O advogado e o time processual garantem que a documentação esteja correta e acompanham o andamento.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"O advogado não consegue furar a fila da Conservatória, pois os processos seguem ordem cronológica. Nossa atuação é garantir que a documentação esteja correta, acompanhar o andamento e agir rapidamente caso o órgão solicite algo. Seguimos monitorando e avisaremos qualquer atualização."</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Qual o prazo de finalização? <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <table class="data-table">
+          <thead><tr><th>Modalidade</th><th>Prazo Médio</th></tr></thead>
+          <tbody>
+            <tr><td>Filhos de portugueses (maiores de idade)</td><td>1 ano e meio a 2 anos e meio</td></tr>
+            <tr><td>Netos de portugueses</td><td>3 a 4 anos e meio</td></tr>
+            <tr><td>Cônjuge</td><td>3 a 4 anos e meio</td></tr>
+          </tbody>
+        </table>
+        <div class="alert alert-warning"><span class="alert-icon">⚠️</span><div>São <strong>estimativas</strong>. Podem variar conforme modalidade, Conservatória e demanda.</div></div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Inadimplência ou cobrança indevida <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Orientar o cliente a contatar diretamente o Financeiro quando possível. Se necessário, acionar a <strong>Cassiane via Hangout</strong> para solicitar verificação e contato do Financeiro com o cliente. Registrar no FlowUp.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Questionamento sobre pesquisas <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Consultar a <strong>planilha de controle de pesquisas</strong> antes de responder. Usar as informações atualizadas para comunicar status. Registrar no FlowUp a data da consulta e a informação repassada.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Emissão de certidões em atraso <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Explicar que a emissão depende dos cartórios. O time processual já está cobrando. Relatar ao time processual e solicitar prioridade na cobrança ao cartório de Joinville quando aplicável. Abrir nova tarefa no FlowUp.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"A emissão depende do retorno do cartório e, por isso, pode ocorrer morosidade. Nosso time processual já está acompanhando e cobrando. Seguiremos monitorando de perto e avisaremos assim que a certidão for recebida."</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Casos de agendamento <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Informar que o time de agendamentos enfrenta dificuldade quando os consulados não abrem agenda ou o site fica fora do ar.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"No momento, os consulados não têm aberto agenda com regularidade e o site de agendamentos pode ficar instável. Nosso time está acompanhando diariamente e, assim que surgir disponibilidade, entraremos em contato."</div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Clientes decepcionados com prazo ou sensação de processo parado <span class="faq-icon">▼</span></div>
+      <div class="faq-a">
+        <p>Acolher a frustração <strong>antes</strong> de explicar. Informar dependência das Conservatórias portuguesas. Avaliar se o caso pede áudio ou ligação.</p>
+        <div class="template-box"><button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>"Compreendemos sua frustração com o prazo. A análise e a conclusão dependem das Conservatórias portuguesas, que hoje lidam com alto volume de processos e limitação de conservadores. Da nossa parte, seguimos acompanhando com atenção e qualquer atualização será comunicada prontamente."</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== TEMPLATES ====== -->
+  <div class="page" id="page-templates">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Base de Conhecimento</span><span class="sep">/</span><span>Templates</span></div>
+    <div class="page-header">
+      <h1>💌 Templates de Mensagem WhatsApp</h1>
+      <p>Modelos base para os atalhos do WhatsApp. Sempre personalize antes de enviar.</p>
+    </div>
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <div>Nunca envie os templates sem personalizar. A mensagem deve parecer humana, não automática.</div>
+    </div>
+
+    <h3><span class="code-tag">/apresentação</span> — Contato Inicial</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Bom dia/Boa tarde, [Nome do responsável pela comunicação]! 😊<br><br>
+      Meu nome é [Nome do CS] e sou a consultora responsável pelo processo de nacionalidade portuguesa de [Nome da pessoa que fará o processo].<br><br>
+      Para darmos início ao processo, precisamos dos seguintes documentos:<br>
+      • [Documento 1]<br>
+      • [Documento 2]<br><br>
+      <strong>Por favor, envie as fotos dos documentos assim que possível.</strong><br><br>
+      Qualquer dúvida, estou à disposição! 🇵🇹
+    </div>
+
+    <h3><span class="code-tag">/procuração</span> — Envio da Preparação Documental</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Olá, [Nome]! Tudo bem?<br><br>
+      Segue em anexo a preparação documental para o seu processo de [Nome do processo].<br><br>
+      <strong>Documentos para assinatura/providenciar:</strong><br>
+      • [Documento 1 + orientação]<br>
+      • [Documento 2 + orientação]<br><br>
+      Prazo para envio: <strong>7 dias úteis</strong>.<br><br>
+      Qualquer dúvida, é só chamar! 😊
+    </div>
+
+    <h3><span class="code-tag">/envioprotocolo</span> — Envio para Protocolo</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Olá, [Nome]! Boas notícias! 🎉<br><br>
+      Informamos que o processo de [Nome do processo] foi enviado para protocolo na Conservatória em [data].<br><br>
+      A partir de agora, acompanharemos mensalmente o andamento e entraremos em contato com atualizações.<br><br>
+      Qualquer dúvida, estamos à disposição! 🇵🇹
+    </div>
+
+    <h3><span class="code-tag">/chaveacesso</span> — Chave de Acesso</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Olá, [Nome]! Tudo bem?<br><br>
+      A chave de acesso do processo [Nome do processo] já está disponível:<br><br>
+      🔑 <strong>Chave: [XXXX-XXXX]</strong><br>
+      📅 Data de protocolo: [data]<br>
+      🏛️ Conservatória: [nome]<br><br>
+      Com essa chave, você pode acompanhar o status no site da Conservatória. Continuaremos monitorando e avisaremos qualquer atualização! 😊
+    </div>
+
+    <h3><span class="code-tag">/submetido</span> — Status Submetido</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Bom dia, [nome]! Tudo bem? Passando para informar que estamos acompanhando o seu processo. Ele segue na etapa 'submetido'. É normal que permaneça assim por um bom tempo, pois os conservadores costumam atualizar as etapas mais ao final do processo. Assim que tivermos qualquer novidade, entraremos em contato.
+    </div>
+
+    <h3><span class="code-tag">/emanalise</span> — Status Em Análise</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Olá, [nome]! Tudo bem? Passando para atualizar que o seu processo [Nome] está na etapa de análise pela Conservatória. Seguimos acompanhando e entraremos em contato assim que houver novidade. 😊
+    </div>
+
+    <h3><span class="code-tag">/paradecisao</span> — Status Para Decisão</h3>
+    <div class="template-box">
+      <button class="copy-btn" onclick="copyTemplate(this)">Copiar</button>
+      Olá, [nome]! Boa notícia! 🎉 O seu processo [Nome] está na etapa "Para Decisão" — isso significa que ele já passou pela análise e aguarda a decisão final da Conservatória. Continuamos acompanhando de perto e avisaremos qualquer novidade!
+    </div>
+  </div>
+
+  <!-- ====== CÓDIGOS CLIENTE ====== -->
+  <div class="page" id="page-codigos-cliente">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Base de Conhecimento</span><span class="sep">/</span><span>Códigos de Cliente</span></div>
+    <div class="page-header">
+      <h1>🎨 Códigos de Cliente</h1>
+      <p>Sistema de classificação comportamental para orientar o atendimento personalizado.</p>
+    </div>
+    <div class="card-grid">
+      <div class="card" style="border-left: 4px solid var(--green)">
+        <div class="card-icon">🟢</div>
+        <div class="card-title">Verde</div>
+        <div class="card-desc">Cliente tranquilo. Atendimento padrão, sem necessidade de atenção especial. Comunicação objetiva e dentro do prazo normal.</div>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--yellow)">
+        <div class="card-icon">🟡</div>
+        <div class="card-title">Amarelo</div>
+        <div class="card-desc">Atenção! Cliente pode se estressar. Requer comunicação mais cuidadosa, proativa e frequente. Antecipe atualizações.</div>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--red-alert)">
+        <div class="card-icon">🔴</div>
+        <div class="card-title">Vermelho</div>
+        <div class="card-desc">Alerta máximo. Cliente necessita de atenção dobrada. Comunicação prioritária, cuidadosa e frequente. Considerar áudio ou ligação.</div>
+      </div>
+    </div>
+    <div class="alert alert-info">
+      <span class="alert-icon">📍</span>
+      <div>O código é verificado na <strong>tarefa de apresentação no FlowUp</strong> e deve orientar toda a comunicação subsequente com o cliente.</div>
+    </div>
+  </div>
+
+  <!-- ====== FERRAMENTAS ====== -->
+  <div class="page" id="page-ferramentas">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Ferramentas e Recursos</span></div>
+    <div class="page-header">
+      <h1>🛠️ Ferramentas e Links Úteis</h1>
+      <p>Sistemas e recursos utilizados pelo time de CS no dia a dia.</p>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-icon">📊</div>
+        <div class="tool-name">FlowUp</div>
+        <div class="tool-desc">Gestão de tarefas, processos e CRM dos clientes.</div>
+        <a href="https://app.flowup.me" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📁</div>
+        <div class="tool-name">SharePoint</div>
+        <div class="tool-desc">Repositório de documentos e fichas de clientes.</div>
+        <a href="https://sharepoint.com" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🔐</div>
+        <div class="tool-name">Apollo</div>
+        <div class="tool-desc">Emissão técnica de procurações.</div>
+        <a href="https://apollo.portocidadaniaportuguesa.com.br/pt/Auth/Login" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">💬</div>
+        <div class="tool-name">WhatsApp Web</div>
+        <div class="tool-desc">Comunicação com clientes.</div>
+        <a href="https://web.whatsapp.com" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">💻</div>
+        <div class="tool-name">Google Hangouts</div>
+        <div class="tool-desc">Comunicação interna com equipes.</div>
+        <a href="https://chat.google.com" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🏛️</div>
+        <div class="tool-name">Conservatória PT</div>
+        <div class="tool-desc">Consulta de status dos processos protocolados.</div>
+        <a href="https://www.irn.mj.pt" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🆔</div>
+        <div class="tool-name">GOV.BR</div>
+        <div class="tool-desc">Assinatura digital de procurações de Cartórios.</div>
+        <a href="https://www.gov.br" target="_blank">Acessar →</a>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📧</div>
+        <div class="tool-name">Microsoft 365</div>
+        <div class="tool-desc">E-mail corporativo, Teams e Office.</div>
+        <a href="https://office.com" target="_blank">Acessar →</a>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <h3>👥 Contatos Internos Importantes</h3>
+    <div class="section-block" style="padding:16px 20px">
+      <table class="data-table">
+        <thead><tr><th>Área / Pessoa</th><th>Canal</th><th>Quando acionar</th></tr></thead>
+        <tbody>
+          <tr><td>Processual</td><td>Hangout</td><td>Conferência de documentos, dúvidas processuais</td></tr>
+          <tr><td>Cassiane (Financeiro)</td><td>Hangout</td><td>Inadimplência, cobrança indevida</td></tr>
+          <tr><td>Dr. Christian</td><td>E-mail</td><td>Cancelamentos efetivos (copiar Ana e Estela)</td></tr>
+          <tr><td>Time de Agendamentos</td><td>Hangout</td><td>Problemas com consulados, agenda, site</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ====== MELHORIA ====== -->
+  <div class="page" id="page-melhoria">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Melhoria Contínua</span><span class="sep">/</span><span>Sugestões</span></div>
+    <div class="page-header">
+      <h1>💡 Sugestões e Banco de Ideias</h1>
+      <p>Sua contribuição melhora os processos de toda a equipe. Compartilhe ideias!</p>
+    </div>
+    <div class="section-block" style="padding:20px">
+      <h3>Nova Sugestão ou Ideia</h3>
+      <div class="form-group">
+        <label>Título</label>
+        <input type="text" class="form-control" placeholder="Ex: Melhorar o fluxo de acompanhamento pós-protocolo">
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <select class="form-control">
+          <option>Processo</option>
+          <option>Comunicação</option>
+          <option>Ferramentas</option>
+          <option>Treinamento</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descrição da ideia</label>
+        <textarea class="form-control" placeholder="Descreva sua ideia com o máximo de detalhes possível..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Impacto esperado</label>
+        <textarea class="form-control" rows="2" placeholder="Como essa mudança beneficiaria o time e os clientes?"></textarea>
+      </div>
+      <div class="flex-gap">
+        <button class="btn-primary" onclick="showToast('✅ Sugestão registrada com sucesso!')">Enviar Sugestão</button>
+        <button class="btn-secondary">Limpar</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3>💡 Banco de Ideias</h3>
+    <div class="section-block" style="padding:16px 20px">
+      <div style="padding:10px 0; border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:.9rem">Criar template automático para cada fase do processo</strong>
+          <span class="pill pill-blue">Processo</span>
+        </div>
+        <p class="text-muted mt-2">Padronizar mais mensagens para reduzir tempo de elaboração.</p>
+      </div>
+      <div style="padding:10px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:.9rem">Dashboard de acompanhamento de clientes por status</strong>
+          <span class="pill pill-gold">Ferramentas</span>
+        </div>
+        <p class="text-muted mt-2">Visualizar em tempo real quantos clientes estão em cada etapa.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== LIÇÕES APRENDIDAS ====== -->
+  <div class="page" id="page-licoes">
+    <div class="breadcrumb"><span onclick="navigate('home')">🏠 Início</span><span class="sep">/</span><span>Melhoria Contínua</span><span class="sep">/</span><span>Lições Aprendidas</span></div>
+    <div class="page-header">
+      <h1>📚 Lições Aprendidas</h1>
+      <p>Registro de situações reais que geraram aprendizado para o time.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--porto-gold)"></div>
+        <div class="tl-content">
+          <h4>Verificar código do cliente antes do primeiro contato</h4>
+          <p>Clientes com código vermelho precisam de abordagem diferente logo na apresentação. Ignorar o código causou atrito desnecessário.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <h4>Sempre conferir histórico no celular, não só no computador</h4>
+          <p>O WhatsApp Web nem sempre exibe o histórico completo. Casos de promessas não cumpridas foram encontrados apenas ao verificar pelo celular.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--green)"></div>
+        <div class="tl-content">
+          <h4>Enviar em blocos separados reduz reclamações de "mensagem automática"</h4>
+          <p>Clientes se sentem mais valorizados quando recebem partes da mensagem separadas, com personalizações visíveis.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <h4>Nunca prometer prazo fechado para Conservatórias</h4>
+          <p>Diversas situações de frustração de clientes foram causadas por prazos prometidos que dependiam de órgão externo.</p>
+        </div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <h3>Registrar Nova Lição</h3>
+    <div class="section-block" style="padding:20px">
+      <div class="form-group"><label>Situação ocorrida</label><textarea class="form-control" placeholder="Descreva a situação..."></textarea></div>
+      <div class="form-group"><label>O que foi aprendido</label><textarea class="form-control" placeholder="Qual foi o aprendizado gerado?"></textarea></div>
+      <div class="form-group"><label>Recomendação</label><textarea class="form-control" rows="2" placeholder="O que deve ser feito diferente da próxima vez?"></textarea></div>
+      <button class="btn-primary" onclick="showToast('✅ Lição registrada!')">Salvar Lição</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ===== NAVIGATION =====
+let currentPage = 'home';
+let editMode = false;
+
+function navigate(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.getElementById('page-' + pageId);
+  if (page) {
+    page.classList.add('active');
+    currentPage = pageId;
+  }
+  document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if (navItem) navItem.classList.add('active');
+  document.querySelectorAll('.subnav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.subnav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${pageId}'`)) {
+      n.classList.add('active');
+    }
+  });
+  window.scrollTo(0, 0);
+  if (window.innerWidth <= 900) closeSidebar();
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('visible');
+}
+
+// ===== SUBNAV =====
+function toggleSubnav(btn, id) {
+  const sub = document.getElementById(id);
+  sub.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+// Open processos subnav by default
+document.addEventListener('DOMContentLoaded', () => {
+  const sub = document.getElementById('sub-processos');
+  const btn = document.querySelector('[onclick*="sub-processos"]');
+  if (sub && btn) { sub.classList.add('open'); btn.classList.add('open'); }
+});
+
+// ===== SECTION BLOCKS =====
+function toggleBlock(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('open');
+  if (header.classList.contains('open')) {
+    body.style.display = 'block';
+  } else {
+    body.style.display = 'none';
+  }
+}
+
+// ===== FAQ =====
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  el.classList.toggle('open');
+  answer.classList.toggle('open');
+}
+
+// ===== THEME =====
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+}
+// Load saved theme
+(function() {
+  const t = localStorage.getItem('theme');
+  if (t) document.documentElement.setAttribute('data-theme', t);
+})();
+
+// ===== EDIT MODE =====
+function toggleEdit() {
+  editMode = !editMode;
+  const editBtn = document.getElementById('edit-btn');
+  const toolbars = document.querySelectorAll('.edit-toolbar');
+  if (editMode) {
+    document.querySelectorAll('.section-block-body p, .section-block-body li, .faq-a p, .tl-content h4, .tl-content p').forEach(el => {
+      el.setAttribute('contenteditable', 'true');
+    });
+    toolbars.forEach(t => t.classList.add('visible'));
+    editBtn.style.background = 'rgba(200,150,43,.25)';
+    showToast('✏️ Modo edição ativo — clique em qualquer texto para editar');
+  } else {
+    document.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    toolbars.forEach(t => t.classList.remove('visible'));
+    editBtn.style.background = '';
+  }
+}
+function saveEdits() {
+  showToast('💾 Alterações salvas localmente!');
+  toggleEdit();
+}
+
+// ===== SEARCH =====
+const searchIndex = [
+  { title: 'Contato de Apresentação', section: 'Processos CS', page: 'apresentacao', keywords: 'apresentação contato inicial cliente flowup whatsapp primeira tarefa rg passaporte código cliente' },
+  { title: 'Procurações no Apollo', section: 'Processos CS', page: 'procuracoes', keywords: 'procuração apollo athena emissão técnica importar cliente cpf' },
+  { title: 'Assinatura e Validação', section: 'Processos CS', page: 'assinatura', keywords: 'assinatura procuração cartório forense gov.br reconhecimento firma autenticidade' },
+  { title: 'Solicitação de Documentos por Plano', section: 'Processos CS', page: 'docs-por-plano', keywords: 'documentos diamante prata bronze certidões apostilamento envio preparação documental' },
+  { title: 'Atendimento WhatsApp', section: 'Processos CS', page: 'whatsapp', keywords: 'whatsapp atendimento investigação histórico contexto resposta mensagem perfil' },
+  { title: 'Acompanhamento Proativo', section: 'Processos CS', page: 'acompanhamento', keywords: 'acompanhamento proativo cliente informar atualização 7 dias' },
+  { title: 'Envio para Protocolo', section: 'Processos CS', page: 'protocolo', keywords: 'protocolo envio conservatória comunicação /envioprotocolo' },
+  { title: 'Chave de Acesso', section: 'Processos CS', page: 'chave-acesso', keywords: 'chave acesso protocolado planilha controle /chaveacesso' },
+  { title: 'Status do Processo', section: 'Processos CS', page: 'status-processo', keywords: 'status submetido em analise para decisão prazo conservatória' },
+  { title: 'Distratos e Cancelamentos', section: 'Processos CS', page: 'distratos', keywords: 'distrato cancelamento retenção financeiro dr christian' },
+  { title: 'Checklist Final de Qualidade', section: 'Processos CS', page: 'checklist-final', keywords: 'checklist qualidade finalizar tarefa verificar fluxo' },
+  { title: 'Regra-Mãe dos Planos', section: 'Regra Principal', page: 'regra-mae', keywords: 'plano diamante prata bronze responsabilidade porto cliente regra' },
+  { title: 'FAQ — Dúvidas Frequentes', section: 'Base de Conhecimento', page: 'faq', keywords: 'faq dúvidas prazo processo parado submetido advogado certidão agendamento cancelamento' },
+  { title: 'Templates de Mensagem', section: 'Base de Conhecimento', page: 'templates', keywords: 'template mensagem whatsapp /apresentação /procuração /chaveacesso atalho modelo' },
+  { title: 'Códigos de Cliente', section: 'Base de Conhecimento', page: 'codigos-cliente', keywords: 'código cliente verde amarelo vermelho comportamental atenção' },
+  { title: 'Ferramentas e Links', section: 'Ferramentas', page: 'ferramentas', keywords: 'flowup sharepoint apollo whatsapp hangout conservatória gov.br ferramentas sistemas' },
+  { title: 'Sugestões e Ideias', section: 'Melhoria Contínua', page: 'melhoria', keywords: 'sugestão ideia melhoria banco feedback' },
+  { title: 'Lições Aprendidas', section: 'Melhoria Contínua', page: 'licoes', keywords: 'lição aprendida registro situação recomendação' },
+];
+
+function doSearch(q) {
+  const box = document.getElementById('search-results');
+  if (!q || q.length < 2) { box.style.display = 'none'; return; }
+  const term = q.toLowerCase();
+  const results = searchIndex.filter(item =>
+    item.title.toLowerCase().includes(term) || item.keywords.toLowerCase().includes(term) || item.section.toLowerCase().includes(term)
+  );
+  if (!results.length) {
+    box.innerHTML = '<div class="sr-item"><div class="sr-title text-muted">Nenhum resultado encontrado</div></div>';
+    box.style.display = 'block';
+    return;
+  }
+  box.innerHTML = results.slice(0, 8).map(r => `
+    <div class="sr-item" onclick="navigate('${r.page}');document.getElementById('search-input').value='';document.getElementById('search-results').style.display='none'">
+      <div class="sr-title">${highlight(r.title, term)}</div>
+      <div class="sr-section">${r.section}</div>
+    </div>`).join('');
+  box.style.display = 'block';
+}
+function highlight(text, term) {
+  const i = text.toLowerCase().indexOf(term);
+  if (i < 0) return text;
+  return text.slice(0,i) + `<span class="sr-match">${text.slice(i, i+term.length)}</span>` + text.slice(i+term.length);
+}
+
+// ===== COPY TEMPLATE =====
+function copyTemplate(btn) {
+  const box = btn.parentElement;
+  const text = box.innerText.replace('Copiar', '').trim();
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Template copiado!')).catch(() => showToast('⚠️ Copie manualmente'));
+}
+
+// ===== CHECKLIST RESET =====
+function resetChecklist() {
+  document.querySelectorAll('#checklist-quality input[type=checkbox]').forEach(c => c.checked = false);
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== KEYBOARD SEARCH =====
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+});
+</script>
+</body>
+</html>
